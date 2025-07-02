@@ -1,18 +1,13 @@
 <html>
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>AR Food on Flat Surface</title>
-
-    <!-- A-Frame and AR.js -->
+    <title>AR Food Placement</title>
     <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/ar.js@3.4.2/aframe/build/aframe-ar.min.js"></script>
-
     <style>
       html, body {
         margin: 0;
         overflow: hidden;
-        width: 100%;
-        height: 100%;
         background: transparent;
       }
 
@@ -22,7 +17,7 @@
         left: 50%;
         transform: translate(-50%, -50%);
         font-size: 18px;
-        background: rgba(0, 0, 0, 0.75);
+        background: rgba(0, 0, 0, 0.8);
         color: white;
         padding: 12px 24px;
         border-radius: 10px;
@@ -34,28 +29,29 @@
         top: 0; left: 0;
         width: 100vw;
         height: 100vh;
+        z-index: 1;
       }
 
       video#arjs-video {
         position: absolute !important;
-        top: 0; left: 0;
+        top: 0 !important;
+        left: 0 !important;
         width: 100vw !important;
         height: 100vh !important;
-        object-fit: cover;
-        z-index: -1;
+        object-fit: cover !important;
+        z-index: 0 !important;
       }
     </style>
   </head>
 
   <body>
-    <!-- Loading screen -->
-    <div id="loading">Requesting camera access...</div>
+    <div id="loading">Initializing camera...</div>
 
-    <!-- AR Scene -->
     <a-scene
       embedded
-      vr-mode-ui="enabled: false"
       arjs="sourceType: webcam; debugUIEnabled: false;"
+      vr-mode-ui="enabled: false"
+      renderer="logarithmicDepthBuffer: true; alpha: true;"
     >
       <a-assets>
         <img
@@ -65,9 +61,8 @@
         />
       </a-assets>
 
-      <!-- Marker -->
+      <!-- Marker to place food image -->
       <a-marker preset="hiro">
-        <!-- Food image lying flat on the marker -->
         <a-image
           src="#food"
           rotation="-90 0 0"
@@ -77,29 +72,27 @@
         ></a-image>
       </a-marker>
 
-      <!-- Camera -->
       <a-entity camera></a-entity>
     </a-scene>
 
     <script>
       const loading = document.getElementById("loading");
 
-      // Check if camera is accessible
+      // Camera permission test
       navigator.mediaDevices.getUserMedia({ video: true })
         .then(() => {
-          console.log("✅ Camera access granted");
-          loading.innerText = "Scene loaded. Point at Hiro marker.";
+          console.log("✅ Camera access allowed.");
         })
-        .catch(() => {
-          loading.innerText = "❌ Camera access denied. Please allow and reload.";
+        .catch((err) => {
+          loading.innerText = "❌ Camera denied. Please allow and refresh.";
+          console.error(err);
         });
 
-      // Hide loading text after scene is ready
+      // Wait until A-Frame + AR.js is fully loaded
       document.querySelector("a-scene").addEventListener("loaded", () => {
-        console.log("✅ A-Frame scene loaded");
-        setTimeout(() => {
-          loading.style.display = "none";
-        }, 1000);
+        console.log("✅ A-Frame scene loaded.");
+        loading.innerText = "Point at Hiro marker to view food...";
+        setTimeout(() => loading.style.display = "none", 2000);
       });
     </script>
   </body>
