@@ -4,6 +4,11 @@
     <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/ar.js@3.4.2/aframe/build/aframe-ar.min.js"></script>
     <style>
+      body, html {
+        margin: 0;
+        overflow: hidden;
+        background: transparent;
+      }
       #loading {
         position: fixed;
         top: 50%;
@@ -19,19 +24,18 @@
     </style>
   </head>
   <body>
-    <!-- Loading UI -->
-    <div id="loading">Loading AR Scene...</div>
+    <div id="loading">Requesting camera...</div>
 
     <a-scene
       embedded
-      arjs="sourceType: webcam; debugUIEnabled: false;"
       vr-mode-ui="enabled: false"
+      arjs="sourceType: webcam; debugUIEnabled: false;"
     >
       <a-assets>
         <img id="food" src="https://upload.wikimedia.org/wikipedia/commons/6/60/Fried_chicken_-_Arnold_Gatilao.jpg" crossorigin="anonymous" />
       </a-assets>
 
-      <!-- Marker -->
+      <!-- Marker for AR -->
       <a-marker preset="hiro">
         <a-image
           id="foodImage"
@@ -40,18 +44,23 @@
           rotation="-90 0 0"
           width="1"
           height="1"
-          visible="false"
         ></a-image>
       </a-marker>
 
+      <!-- Required to activate webcam -->
       <a-entity camera></a-entity>
     </a-scene>
 
     <script>
-      const img = document.querySelector("#foodImage");
-      img.addEventListener("loaded", () => {
-        document.getElementById("loading").style.display = "none";
-        img.setAttribute("visible", "true");
+      const scene = document.querySelector('a-scene');
+      scene.addEventListener('loaded', () => {
+        document.getElementById('loading').innerText = 'Scene loaded. Point at Hiro marker.';
+      });
+
+      navigator.mediaDevices.getUserMedia({ video: true }).then(() => {
+        console.log("✅ Camera access granted");
+      }).catch(() => {
+        document.getElementById('loading').innerText = '❌ Camera access denied. Please reload and allow.';
       });
     </script>
   </body>
