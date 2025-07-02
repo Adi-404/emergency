@@ -3,29 +3,54 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+    <style>
+      #debug {
+        position: fixed;
+        top: 10px;
+        left: 10px;
+        background: rgba(0, 0, 0, 0.75);
+        color: #0f0;
+        font-family: monospace;
+        font-size: 14px;
+        padding: 10px;
+        border-radius: 5px;
+        z-index: 9999;
+        white-space: pre-line;
+      }
+    </style>
   </head>
   <body>
+    <div id="debug">🟡 Waiting for AR scene...</div>
+
     <a-scene
       mindar-image="imageTargetSrc: https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/image-tracking/assets/card-example/card.mind;"
       color-space="sRGB"
       renderer="colorManagement: true, physicallyCorrectLights"
       vr-mode-ui="enabled: false"
       device-orientation-permission-ui="enabled: false"
+      loading-screen="enabled: false"
     >
       <a-assets>
-        <img id="card" src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/image-tracking/assets/card-example/card.png" />
-        <!-- Your own food image -->
+        <img
+          id="card"
+          src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/image-tracking/assets/card-example/card.png"
+        />
         <img id="food" src="./6024359.jpg" crossorigin="anonymous" />
       </a-assets>
 
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-      <a-entity mindar-image-target="targetIndex: 0">
-        <!-- Table marker plane -->
-        <a-plane src="#card" position="0 0 0" height="0.552" width="1"></a-plane>
+      <a-entity mindar-image-target="targetIndex: 0" id="target">
+        <a-plane
+          src="#card"
+          position="0 0 0"
+          height="0.552"
+          width="1"
+          rotation="0 0 0"
+        ></a-plane>
 
-        <!-- PNG Food Image on top of the marker -->
         <a-image
+          id="foodImage"
           src="#food"
           position="0 0.1 0.1"
           width="0.5"
@@ -34,5 +59,38 @@
         ></a-image>
       </a-entity>
     </a-scene>
+
+    <script>
+      const debugBox = document.getElementById("debug");
+
+      function logDebug(message) {
+        debugBox.innerText += `\n✅ ${message}`;
+      }
+
+      // Track if food image loads
+      const foodImage = document.getElementById("foodImage");
+      foodImage.addEventListener("loaded", () => {
+        logDebug("Food image loaded.");
+      });
+
+      // Log MindAR target visibility
+      const target = document.getElementById("target");
+      target.addEventListener("targetFound", () => {
+        logDebug("Marker detected (floor found).");
+      });
+      target.addEventListener("targetLost", () => {
+        logDebug("Marker lost.");
+      });
+
+      // Log initial scene setup
+      window.addEventListener("DOMContentLoaded", () => {
+        logDebug("Scene DOM loaded.");
+      });
+
+      // Wait for scene to fully initialize
+      document.querySelector("a-scene").addEventListener("loaded", () => {
+        logDebug("A-Frame scene fully initialized.");
+      });
+    </script>
   </body>
 </html>
