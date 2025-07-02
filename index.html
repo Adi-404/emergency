@@ -1,129 +1,44 @@
-<!DOCTYPE html>
-<html lang="en">
+<html>
   <head>
-    <title>AR Floor Placement</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-      body {
-        margin: 0;
-        overflow: hidden;
-      }
-
-      #start-ar {
-        position: absolute;
-        z-index: 10;
-        top: 20px;
-        left: 20px;
-        padding: 10px 20px;
-        font-size: 16px;
-        background: #007bff;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-      }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
   </head>
   <body>
-    <button id="start-ar">Start AR</button>
+    <a-scene 
+      mindar-image="imageTargetSrc: ./targets.mind;" 
+      color-space="sRGB" 
+      renderer="colorManagement: true, physicallyCorrectLights" 
+      vr-mode-ui="enabled: false" 
+      device-orientation-permission-ui="enabled: false"
+    >
+      <a-assets>
+        <img id="broccoli" src="./render.0001.png" />
+        <a-asset-item 
+          id="avatarModel" 
+          src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/image-tracking/assets/card-example/softmind/scene.gltf"
+        ></a-asset-item>
+      </a-assets>
 
-    <!-- Load three.js and ARButton from official CDN -->
-    <script type="module">
-      import * as THREE from 'https://unpkg.com/three@0.150.1/build/three.module.js';
-      import { ARButton } from 'https://unpkg.com/three@0.150.1/examples/jsm/webxr/ARButton.js';
+      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-      let camera, scene, renderer;
-      let controller;
-      let reticle;
-      let hitTestSource = null;
-      let hitTestSourceRequested = false;
-      let imagePlaced = false;
+      <a-entity mindar-image-target="targetIndex: 0">
+        <a-plane 
+          src="#broccoli" 
+          position="0 0 0" 
+          height="0.552" 
+          width="1" 
+          rotation="0 0 0"
+        ></a-plane>
 
-      const startButton = document.getElementById('start-ar');
-      startButton.addEventListener('click', () => {
-        initAR();
-        startButton.style.display = 'none';
-      });
-
-      function initAR() {
-        scene = new THREE.Scene();
-        camera = new THREE.PerspectiveCamera();
-
-        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.xr.enabled = true;
-        document.body.appendChild(renderer.domElement);
-
-        document.body.appendChild(ARButton.createButton(renderer, {
-          requiredFeatures: ['hit-test'],
-          optionalFeatures: ['dom-overlay'],
-          domOverlay: { root: document.body }
-        }));
-
-        const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
-        scene.add(light);
-
-        // Reticle
-        const ringGeo = new THREE.RingGeometry(0.07, 0.1, 32).rotateX(-Math.PI / 2);
-        const ringMat = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-        reticle = new THREE.Mesh(ringGeo, ringMat);
-        reticle.matrixAutoUpdate = false;
-        reticle.visible = false;
-        scene.add(reticle);
-
-        controller = renderer.xr.getController(0);
-        controller.addEventListener('select', () => {
-          if (reticle.visible && !imagePlaced) {
-            const loader = new THREE.TextureLoader();
-            loader.load('./6024359.jpg', (texture) => {
-              const material = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide });
-              const plane = new THREE.Mesh(new THREE.PlaneGeometry(1, 0.6), material);
-              plane.position.setFromMatrixPosition(reticle.matrix);
-              plane.quaternion.setFromRotationMatrix(reticle.matrix);
-              scene.add(plane);
-              imagePlaced = true;
-            });
-          }
-        });
-        scene.add(controller);
-
-        renderer.setAnimationLoop(render);
-      }
-
-      function render(timestamp, frame) {
-        if (frame) {
-          const referenceSpace = renderer.xr.getReferenceSpace();
-          const session = renderer.xr.getSession();
-
-          if (!hitTestSourceRequested) {
-            session.requestReferenceSpace('viewer').then((refSpace) => {
-              session.requestHitTestSource({ space: refSpace }).then((source) => {
-                hitTestSource = source;
-              });
-            });
-            hitTestSourceRequested = true;
-
-            session.addEventListener('end', () => {
-              hitTestSourceRequested = false;
-              hitTestSource = null;
-            });
-          }
-
-          if (hitTestSource) {
-            const hitTestResults = frame.getHitTestResults(hitTestSource);
-            if (hitTestResults.length > 0) {
-              const hit = hitTestResults[0];
-              const pose = hit.getPose(referenceSpace);
-              reticle.visible = true;
-              reticle.matrix.fromArray(pose.transform.matrix);
-            } else {
-              reticle.visible = false;
-            }
-          }
-        }
-
-        renderer.render(scene, camera);
-      }
-    </script>
+        <a-gltf-model 
+          rotation="0 0 0" 
+          position="0 0 0.1" 
+          scale="0.005 0.005 0.005" 
+          src="#avatarModel"
+          animation="property: position; to: 0 0.1 0.1; dur: 1000; easing: easeInOutQuad; loop: true; dir: alternate"
+        ></a-gltf-model>
+      </a-entity>
+    </a-scene>
   </body>
 </html>
