@@ -2,38 +2,57 @@
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ar.js@3.4.2/aframe/build/aframe-ar.min.js"></script>
+    <style>
+      #loading {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 20px;
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        padding: 12px 20px;
+        border-radius: 10px;
+        z-index: 999;
+      }
+    </style>
   </head>
   <body>
+    <!-- Loading UI -->
+    <div id="loading">Loading AR Scene...</div>
+
     <a-scene
-      mindar-image="imageTargetSrc: https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/image-tracking/assets/card-example/card.mind;"
-      color-space="sRGB"
-      renderer="colorManagement: true, physicallyCorrectLights"
+      embedded
+      arjs="sourceType: webcam; debugUIEnabled: false;"
       vr-mode-ui="enabled: false"
-      device-orientation-permission-ui="enabled: false"
-      loading-screen="enabled: false"
     >
       <a-assets>
-        <img id="card" src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/image-tracking/assets/card-example/card.png" />
-        <!-- Replace with your own image or CDN link -->
         <img id="food" src="https://upload.wikimedia.org/wikipedia/commons/6/60/Fried_chicken_-_Arnold_Gatilao.jpg" crossorigin="anonymous" />
       </a-assets>
 
-      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-
-      <a-entity mindar-image-target="targetIndex: 0">
-        <!-- Optional: show card image as ground -->
-        <!-- <a-plane src="#card" position="0 0 0" height="0.552" width="1"></a-plane> -->
-
-        <!-- Food image laid flat -->
+      <!-- Marker -->
+      <a-marker preset="hiro">
         <a-image
+          id="foodImage"
           src="#food"
-          position="0 0.01 0"           <!-- slightly above marker -->
-          width="0.6"
-          height="0.6"
-          rotation="-90 0 0"            <!-- flat on surface -->
+          position="0 0 0"
+          rotation="-90 0 0"
+          width="1"
+          height="1"
+          visible="false"
         ></a-image>
-      </a-entity>
+      </a-marker>
+
+      <a-entity camera></a-entity>
     </a-scene>
+
+    <script>
+      const img = document.querySelector("#foodImage");
+      img.addEventListener("loaded", () => {
+        document.getElementById("loading").style.display = "none";
+        img.setAttribute("visible", "true");
+      });
+    </script>
   </body>
 </html>
