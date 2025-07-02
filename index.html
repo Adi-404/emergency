@@ -2,62 +2,56 @@
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/aframe-ar@1.8.1/aframe-ar.min.js"></script>
     <style>
       #loading {
         position: fixed;
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        font-size: 24px;
-        background: rgba(0, 0, 0, 0.8);
-        color: #fff;
-        padding: 10px 20px;
+        font-size: 20px;
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        padding: 12px 20px;
         border-radius: 10px;
         z-index: 999;
       }
     </style>
   </head>
   <body>
-    <!-- Loading message -->
-    <div id="loading">Loading AR experience...</div>
+    <!-- Loading UI -->
+    <div id="loading">Loading AR Scene...</div>
 
     <a-scene
-      mindar-image="imageTargetSrc: https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/image-tracking/assets/card-example/card.mind;"
-      color-space="sRGB"
-      renderer="colorManagement: true, physicallyCorrectLights"
       vr-mode-ui="enabled: false"
-      device-orientation-permission-ui="enabled: false"
-      loading-screen="enabled: false"
+      embedded
+      arjs="sourceType: webcam; debugUIEnabled: false;"
+      renderer="logarithmicDepthBuffer: true;"
     >
       <a-assets>
-        <img id="card" src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/image-tracking/assets/card-example/card.png" />
         <img id="food" src="./6024359.jpg" crossorigin="anonymous" />
       </a-assets>
 
-      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+      <a-camera gps-camera rotation-reader></a-camera>
 
-      <a-entity mindar-image-target="targetIndex: 0">
-        <!-- Table marker -->
-        <a-plane src="#card" position="0 0 0" height="0.552" width="1"></a-plane>
-
-        <!-- Food image -->
-        <a-image
-          id="foodEntity"
-          src="#food"
-          position="0 0.1 0.1"
-          width="0.5"
-          height="0.5"
-          rotation="-90 0 0"
-        ></a-image>
-      </a-entity>
+      <!-- Spawn image slightly above surface -->
+      <a-image
+        id="foodImage"
+        src="#food"
+        position="0 0 0"
+        rotation="-90 0 0"
+        width="1"
+        height="1"
+        visible="false"
+      ></a-image>
     </a-scene>
 
     <script>
-      // Hide loader once food image is loaded in the scene
-      const foodImage = document.querySelector('#foodEntity');
-      foodImage.addEventListener('loaded', () => {
-        document.getElementById('loading').style.display = 'none';
+      // Show food image once it's loaded
+      const img = document.querySelector("#foodImage");
+      img.addEventListener("loaded", () => {
+        document.getElementById("loading").style.display = "none";
+        img.setAttribute("visible", "true");
       });
     </script>
   </body>
