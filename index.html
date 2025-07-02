@@ -2,15 +2,21 @@
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/aframe-ar@1.8.1/aframe-ar.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/aframe-extras@6.1.1/dist/aframe-extras.min.js"></script>
+    <script src="https://unpkg.com/aframe-ar@1.8.1/aframe-ar.min.js"></script>
     <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+        background: transparent;
+      }
       #loading {
         position: fixed;
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
         font-size: 20px;
-        background: rgba(0, 0, 0, 0.7);
+        background: rgba(0, 0, 0, 0.6);
         color: white;
         padding: 12px 20px;
         border-radius: 10px;
@@ -19,22 +25,39 @@
     </style>
   </head>
   <body>
-    <!-- Loading UI -->
+    <!-- Loading Screen -->
     <div id="loading">Loading AR Scene...</div>
 
     <a-scene
-      vr-mode-ui="enabled: false"
       embedded
-      arjs="sourceType: webcam; debugUIEnabled: false;"
-      renderer="logarithmicDepthBuffer: true;"
+      vr-mode-ui="enabled: false"
+      renderer="alpha: true; antialias: true"
+      webxr="requiredFeatures: hit-test; optionalFeatures: dom-overlay;"
+      xr-mode="ar"
     >
       <a-assets>
         <img id="food" src="./6024359.jpg" crossorigin="anonymous" />
       </a-assets>
 
-      <a-camera gps-camera rotation-reader></a-camera>
+      <!-- Camera with AR hit-test -->
+      <a-camera
+        position="0 0 0"
+        look-controls
+        raycaster="objects: .clickable"
+        cursor="fuse: false; rayOrigin: mouse"
+      ></a-camera>
 
-      <!-- Spawn image slightly above surface -->
+      <!-- Invisible reticle -->
+      <a-entity
+        id="reticle"
+        geometry="primitive: ring; radiusInner: 0.02; radiusOuter: 0.03;"
+        material="color: green; shader: flat"
+        position="0 0 0"
+        rotation="-90 0 0"
+        visible="false"
+      ></a-entity>
+
+      <!-- Food image (initially hidden) -->
       <a-image
         id="foodImage"
         src="#food"
@@ -47,11 +70,47 @@
     </a-scene>
 
     <script>
-      // Show food image once it's loaded
-      const img = document.querySelector("#foodImage");
-      img.addEventListener("loaded", () => {
-        document.getElementById("loading").style.display = "none";
-        img.setAttribute("visible", "true");
+      const loading = document.getElementById('loading');
+      const foodImage = document.getElementById('foodImage');
+      const reticle = document.getElementById('reticle');
+
+      // Show loading until image is ready
+      foodImage.addEventListener('loaded', () => {
+        loading.style.display = 'none';
+      });
+
+      // Start hit-test loop
+      AFRAME.scenes[0].renderer.xr.addEventListener('sessionstart', () => {
+        const sceneEl = document.querySelector('a-scene');
+        const xrSession = sceneEl.renderer.xr.getSession();
+        const viewerSpace = sceneEl.renderer.xr.getReferenceSpace();
+        let hitTestSource = null;
+
+        xrSession.requestReferenceSpace('viewer').then((refSpace) => {
+          xrSession.requestHitTestSource({ space: refSpace }).then((source) => {
+            hitTestSource = source;
+          });
+        });
+
+        sceneEl.renderer.setAnimationLoop((time, frame) => {
+          if (!hitTestSource || !frame) return;
+          const hitTestResults = frame.getHitTestResults(hitTestSource);
+          if (hitTestResults.length > 0) {
+            const hit = hitTestResults[0];
+            const pose = hit.getPose(viewerSpace);
+            const pos = pose.transform.position;
+
+            reticle.setAttribute('position', `${pos.x} ${pos.y} ${pos.z}`);
+            reticle.setAttribute('visible', 'true');
+          }
+        });
+
+        // Tap to place food
+        sceneEl.addEventListener('click', () => {
+          if (!reticle.getAttribute('visible')) return;
+          foodImage.setAttribute('position', reticle.getAttribute('position'));
+          foodImage.setAttribute('visible', 'true');
+        });
       });
     </script>
   </body>
